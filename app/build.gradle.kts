@@ -33,12 +33,27 @@ android {
     }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
 }
 
 dependencies {
+    val windowmanager_version = "1.5.1"
+
+    // Android Window Manager
+    implementation("androidx.window:window:$windowmanager_version")
+    androidTestImplementation("androidx.window:window-testing:$windowmanager_version")
+
+    // Lifecycle
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+
+    // include this for the constraint Layout
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
+
+    // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
+    implementation("androidx.window:window:$windowmanager_version")
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
