@@ -49,6 +49,7 @@ dependencies {
 
     // include this for the constraint Layout
     implementation("androidx.constraintlayout:constraintlayout:2.2.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
 
     // Jetpack Compose
     implementation(platform(libs.androidx.compose.bom))
@@ -67,4 +68,13 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // tests
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test:rules:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+
+    androidTestImplementation("androidx.window:window-testing:1.5.1")
+
 }
