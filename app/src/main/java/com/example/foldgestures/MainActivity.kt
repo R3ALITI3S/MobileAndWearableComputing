@@ -1,47 +1,132 @@
+
 package com.example.foldgestures
 
 import android.os.Bundle
+import android.graphics.Rect
+import android.view.View
+import android.content.Context
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.foldgestures.ui.theme.FoldGesturesTheme
+import androidx.constraintlayout.widget.ConstraintSet
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+
+import androidx.window.layout.WindowInfoTracker
+import androidx.window.layout.WindowMetricsCalculator
+import androidx.window.layout.WindowLayoutInfo
+import androidx.window.layout.FoldingFeature
+
+import com.example.foldgestures.databinding.ActivityMainBinding
+
+import kotlinx.coroutines.launch
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
+
+    private lateinit var windowInfoTracker: WindowInfoTracker
+    private lateinit var binding: ActivityMainBinding
+
+    private lateinit var sensorManager: SensorManager
+    private var hingeAngleSensor: Sensor? = null
+
+    private var hingeSensorListener: SensorEventListener? = null
+
+    private var currentHingeAngle: Float? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            FoldGesturesTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        windowInfoTracker = WindowInfoTracker.getOrCreate(this)
+
+        // Get the hinge method
+        initializeHingeSensor()
+    }
+
+    // THE HINGE SENSOR
+    private fun initializeHingeSensor() {
+
+        sensorManager = getSystemService(Context.SENSOR_SERVICE)
+                as SensorManager
+
+        hingeAngleSensor = sensorManager.getDefaultSensor(
+            Sensor.TYPE_HINGE_ANGLE
+        )
+
+        if (hingeAngleSensor != null) {
+
+            binding.hingeAngle.text =
+                "Hinge Angle: Waiting for sensor..."
+
+            hingeSensorListener = object : SensorEventListener {
+
+                override fun onSensorChanged(event: SensorEvent) {
+
+                    if (event.values.isNotEmpty()) {
+
+                        val angle = event.values[0]
+
+                        currentHingeAngle = angle
+
+                        runOnUiThread {
+
+                            binding.hingeAngle.text =
+                                String.format(
+                                    Locale.getDefault(),
+                                    "Hinge Angle: %.2f°",
+                                    angle
+                                )
+                        }
+                    }
+                }
+
+                override fun onAccuracyChanged(
+                    sensor: Sensor?,
+                    accuracy: Int
+                ) {
+                    binding.hingeAngle.text = "Data changed!"
                 }
             }
+
+        } else {
+
+            binding.hingeAngle.text =
+                "Hinge angle sensor is not suppotrted"
         }
     }
-}
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
+    // Register hinge sensor
+    override fun onResume() {
+        super.onResume()
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    FoldGesturesTheme {
-        Greeting("Android")
+        val sensor = hingeAngleSensor
+        val listener = hingeSensorListener
+
+        if (sensor != null && listener != null) {
+
+            sensorManager.registerListener(
+                listener,
+                sensor,
+                SensorManager.SENSOR_DELAY_UI
+            )
+        }
+    }
+
+    // Unregister hinge sensor
+    override fun onPause() {
+        super.onPause()
+
+        hingeSensorListener?.let {
+            if (::sensorManager.isInitialized) {
+                sensorManager.unregisterListener(it)
+            }
+        }
     }
 }
